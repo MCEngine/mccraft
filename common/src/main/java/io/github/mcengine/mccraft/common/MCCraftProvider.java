@@ -7,6 +7,7 @@ import io.github.mcengine.mccraft.common.listener.MCCraftListenerManager;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -73,10 +74,11 @@ public class MCCraftProvider {
     // --- Async Database Wrappers ---
 
     public CompletableFuture<Void> saveItem(String id, String type, String contents) {
+        final String normalizedType = normalizeType(type);
         return runAsync(() -> {
             try {
-                db.upsertItem(id, type, contents);
-                RecipeCache.getInstance().putRecipe(id, type, contents);
+                db.upsertItem(id, normalizedType, contents);
+                RecipeCache.getInstance().putRecipe(id, normalizedType, contents);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -95,9 +97,10 @@ public class MCCraftProvider {
     }
 
     public CompletableFuture<List<Map<String, String>>> getItemsByType(String type) {
+        final String normalizedType = normalizeType(type);
         return runAsync(() -> {
             try {
-                return db.getItemsByType(type);
+                return db.getItemsByType(normalizedType);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -129,10 +132,11 @@ public class MCCraftProvider {
     // --- Async Type Table Wrappers ---
 
     public CompletableFuture<Void> insertType(String type, String headItemBase64) {
+        final String normalizedType = normalizeType(type);
         return runAsync(() -> {
             try {
-                db.insertType(type, headItemBase64);
-                RecipeCache.getInstance().putType(type, headItemBase64);
+                db.insertType(normalizedType, headItemBase64);
+                RecipeCache.getInstance().putType(normalizedType, headItemBase64);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -141,9 +145,10 @@ public class MCCraftProvider {
     }
 
     public CompletableFuture<Boolean> typeExists(String type) {
+        final String normalizedType = normalizeType(type);
         return runAsync(() -> {
             try {
-                return db.typeExists(type);
+                return db.typeExists(normalizedType);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -151,9 +156,10 @@ public class MCCraftProvider {
     }
 
     public CompletableFuture<String> getTypeHeadItem(String type) {
+        final String normalizedType = normalizeType(type);
         return runAsync(() -> {
             try {
-                return db.getTypeHeadItem(type);
+                return db.getTypeHeadItem(normalizedType);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -168,6 +174,10 @@ public class MCCraftProvider {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private String normalizeType(String type) {
+        return type == null ? null : type.toLowerCase(Locale.ROOT);
     }
 
     public void shutdown() {

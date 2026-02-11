@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -35,7 +36,7 @@ public class HandleGet implements ICraftCommandHandle {
         }
 
         Player player = (Player) sender;
-        String type = args[0];
+        String type = args[0].toLowerCase(Locale.ROOT);
         MCCraftProvider provider = MCCraftProvider.getInstance();
 
         provider.getTypeHeadItem(type).thenAccept(base64 -> {

@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -39,7 +40,7 @@ public class HandleType implements ICraftCommandHandle {
             return;
         }
 
-        String type = args[1];
+        String type = args[1].toLowerCase(Locale.ROOT);
         String thirdArg = args[2];
         MCCraftProvider provider = MCCraftProvider.getInstance();
 
