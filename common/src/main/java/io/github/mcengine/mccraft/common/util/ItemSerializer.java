@@ -1,15 +1,14 @@
 package io.github.mcengine.mccraft.common.util;
 
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.Base64;
 
 /**
  * Utility class for serializing and deserializing {@link ItemStack} objects to/from Base64 strings.
+ * Uses Paper's NBT-based {@code serializeAsBytes}/{@code deserializeBytes} API (no deprecated streams).
  */
 public final class ItemSerializer {
 
@@ -23,12 +22,10 @@ public final class ItemSerializer {
      */
     public static String toBase64(ItemStack item) {
         if (item == null) return null;
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             BukkitObjectOutputStream boos = new BukkitObjectOutputStream(baos)) {
-            boos.writeObject(item);
-            return Base64.getEncoder().encodeToString(baos.toByteArray());
+        try {
+            byte[] data = item.serializeAsBytes();
+            return Base64.getEncoder().encodeToString(data);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
@@ -43,10 +40,7 @@ public final class ItemSerializer {
         if (base64 == null || base64.isEmpty()) return null;
         try {
             byte[] data = Base64.getDecoder().decode(base64);
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(data);
-                 BukkitObjectInputStream bois = new BukkitObjectInputStream(bais)) {
-                return (ItemStack) bois.readObject();
-            }
+            return ItemStack.deserializeBytes(data);
         } catch (Exception e) {
             return null;
         }
@@ -60,15 +54,21 @@ public final class ItemSerializer {
      */
     public static String arrayToBase64(ItemStack[] items) {
         if (items == null) return null;
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             BukkitObjectOutputStream boos = new BukkitObjectOutputStream(baos)) {
-            boos.writeInt(items.length);
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            // Write length as 4-byte int
+            baos.write(ByteBuffer.allocate(4).putInt(items.length).array());
             for (ItemStack item : items) {
-                boos.writeObject(item);
+                if (item == null) {
+                    baos.write(ByteBuffer.allocate(4).putInt(0).array());
+                } else {
+                    byte[] itemBytes = item.serializeAsBytes();
+                    baos.write(ByteBuffer.allocate(4).putInt(itemBytes.length).array());
+                    baos.write(itemBytes);
+                }
             }
             return Base64.getEncoder().encodeToString(baos.toByteArray());
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
@@ -83,17 +83,21 @@ public final class ItemSerializer {
         if (base64 == null || base64.isEmpty()) return null;
         try {
             byte[] data = Base64.getDecoder().decode(base64);
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(data);
-                 BukkitObjectInputStream bois = new BukkitObjectInputStream(bais)) {
-                int length = bois.readInt();
-                ItemStack[] items = new ItemStack[length];
-                for (int i = 0; i < length; i++) {
-                    items[i] = (ItemStack) bois.readObject();
+            ByteBuffer buf = ByteBuffer.wrap(data);
+            int length = buf.getInt();
+            ItemStack[] items = new ItemStack[length];
+            for (int i = 0; i < length; i++) {
+                int itemLen = buf.getInt();
+                if (itemLen == 0) {
+                    items[i] = null;
+                } else {
+                    byte[] itemBytes = new byte[itemLen];
+                    buf.get(itemBytes);
+                    items[i] = ItemStack.deserializeBytes(itemBytes);
                 }
-                return items;
             }
+            return items;
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }

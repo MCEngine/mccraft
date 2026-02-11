@@ -18,7 +18,6 @@ dependencies {
     compileOnly 'org.jetbrains:annotations:24.0.0'
     api 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
-    compileOnly 'com.mojang:authlib:1.5.25'
 
     implementation 'com.zaxxer:HikariCP:7.0.2'
 }
