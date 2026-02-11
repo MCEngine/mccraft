@@ -224,9 +224,32 @@ public class CraftingGUIListener implements Listener {
             }
         }
 
-        // Give the result to the cursor
+        // Give the result to the player, respecting existing cursor item
         event.setCancelled(true);
-        player.setItemOnCursor(match.getResult().clone());
+        ItemStack resultItem = match.getResult().clone();
+        ItemStack cursor = event.getCursor();
+
+        if (cursor != null && !cursor.getType().isAir()) {
+            // If same item type, try to stack
+            if (cursor.isSimilar(resultItem)) {
+                int space = cursor.getMaxStackSize() - cursor.getAmount();
+                int toAdd = Math.min(space, resultItem.getAmount());
+                cursor.setAmount(cursor.getAmount() + toAdd);
+                int remaining = resultItem.getAmount() - toAdd;
+                if (remaining > 0) {
+                    resultItem.setAmount(remaining);
+                    Map<Integer, ItemStack> overflow = player.getInventory().addItem(resultItem);
+                    overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+                }
+                player.setItemOnCursor(cursor);
+            } else {
+                // Different item in cursor — place result into inventory
+                Map<Integer, ItemStack> overflow = player.getInventory().addItem(resultItem);
+                overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+            }
+        } else {
+            player.setItemOnCursor(resultItem);
+        }
 
         // Re-check recipe after consuming ingredients
         scheduleRecipeCheck(inv, titleText);
