@@ -47,12 +47,21 @@ public class CraftingGUIListener implements Listener {
         int slot = event.getRawSlot();
         boolean isEditor = titleText.contains("[");
 
-        // Prevent Q-drop and cursor-drop while in crafting GUI
-        if (event.getAction() == InventoryAction.DROP_ALL_SLOT
+        boolean isDropAction = event.getAction() == InventoryAction.DROP_ALL_SLOT
                 || event.getAction() == InventoryAction.DROP_ONE_SLOT
                 || event.getAction() == InventoryAction.DROP_ALL_CURSOR
-                || event.getAction() == InventoryAction.DROP_ONE_CURSOR) {
-            event.setCancelled(true);
+                || event.getAction() == InventoryAction.DROP_ONE_CURSOR;
+
+        // Only block drops in crafting view (not editor). Allow Q on the result slot to craft.
+        if (isDropAction) {
+            if (isEditor) {
+                return;
+            }
+            if (slot == GUIConstants.RESULT_SLOT) {
+                handleCraftResult(event, player, titleText, true);
+            } else {
+                event.setCancelled(true);
+            }
             return;
         }
 
@@ -69,7 +78,7 @@ public class CraftingGUIListener implements Listener {
                     // Editor: allow free interaction with result slot
                 } else {
                     // Crafting view: handle taking the result
-                    handleCraftResult(event, player, titleText);
+                    handleCraftResult(event, player, titleText, false);
                 }
             } else {
                 // Filler slots — always cancel
@@ -173,7 +182,7 @@ public class CraftingGUIListener implements Listener {
      * Handles the logic when a player clicks the result slot in a crafting view.
      * Validates the head item requirement, decrements ingredients, and gives the result.
      */
-    private void handleCraftResult(InventoryClickEvent event, Player player, String titleText) {
+    private void handleCraftResult(InventoryClickEvent event, Player player, String titleText, boolean isDropAction) {
         String type = titleText.substring(titleText.indexOf("-") + 2).trim();
         Inventory inv = event.getView().getTopInventory();
 
@@ -225,31 +234,36 @@ public class CraftingGUIListener implements Listener {
             }
         }
 
-        // Give the result to the player, respecting existing cursor item
+        // Give the result to the player. If triggered by Q/drop, craft a single item into inventory.
         event.setCancelled(true);
         ItemStack resultItem = match.getResult().clone();
-        ItemStack cursor = event.getCursor();
-
-        if (cursor != null && !cursor.getType().isAir()) {
-            // If same item type, try to stack
-            if (cursor.isSimilar(resultItem)) {
-                int space = cursor.getMaxStackSize() - cursor.getAmount();
-                int toAdd = Math.min(space, resultItem.getAmount());
-                cursor.setAmount(cursor.getAmount() + toAdd);
-                int remaining = resultItem.getAmount() - toAdd;
-                if (remaining > 0) {
-                    resultItem.setAmount(remaining);
+        if (isDropAction) {
+            resultItem.setAmount(1);
+            Map<Integer, ItemStack> overflow = player.getInventory().addItem(resultItem);
+            overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+        } else {
+            ItemStack cursor = event.getCursor();
+            if (cursor != null && !cursor.getType().isAir()) {
+                // If same item type, try to stack
+                if (cursor.isSimilar(resultItem)) {
+                    int space = cursor.getMaxStackSize() - cursor.getAmount();
+                    int toAdd = Math.min(space, resultItem.getAmount());
+                    cursor.setAmount(cursor.getAmount() + toAdd);
+                    int remaining = resultItem.getAmount() - toAdd;
+                    if (remaining > 0) {
+                        resultItem.setAmount(remaining);
+                        Map<Integer, ItemStack> overflow = player.getInventory().addItem(resultItem);
+                        overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+                    }
+                    player.setItemOnCursor(cursor);
+                } else {
+                    // Different item in cursor — place result into inventory
                     Map<Integer, ItemStack> overflow = player.getInventory().addItem(resultItem);
                     overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
                 }
-                player.setItemOnCursor(cursor);
             } else {
-                // Different item in cursor — place result into inventory
-                Map<Integer, ItemStack> overflow = player.getInventory().addItem(resultItem);
-                overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+                player.setItemOnCursor(resultItem);
             }
-        } else {
-            player.setItemOnCursor(resultItem);
         }
 
         // Re-check recipe after consuming ingredients
