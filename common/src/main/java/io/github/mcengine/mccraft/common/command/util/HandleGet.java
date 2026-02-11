@@ -88,6 +88,6 @@ public class HandleGet implements ICraftCommandHandle {
 
     @Override
     public String getPermission() {
-        return null;
+        return "mcengine.mccraft.get";
     }
 }

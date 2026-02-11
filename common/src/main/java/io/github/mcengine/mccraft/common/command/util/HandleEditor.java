@@ -51,6 +51,6 @@ public class HandleEditor implements ICraftCommandHandle {
 
     @Override
     public String getPermission() {
-        return null;
+        return "mcengine.mccraft.editor";
     }
 }
