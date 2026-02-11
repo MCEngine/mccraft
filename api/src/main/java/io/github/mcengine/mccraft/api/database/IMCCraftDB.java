@@ -10,7 +10,7 @@ import java.util.Map;
 public interface IMCCraftDB {
 
     /**
-     * Creates the mccraft_item table if it does not exist.
+     * Creates the mccraft_item and mccraft_type tables if they do not exist.
      *
      * @throws SQLException if a database access error occurs
      */
@@ -59,6 +59,43 @@ public interface IMCCraftDB {
      * @throws SQLException if a database access error occurs
      */
     void deleteItem(String id) throws SQLException;
+
+    // --- Type Table Methods ---
+
+    /**
+     * Inserts a new station type with its head item Base64.
+     *
+     * @param type           the unique type name
+     * @param headItemBase64 the Base64-encoded head item
+     * @throws SQLException if a database access error occurs
+     */
+    void insertType(String type, String headItemBase64) throws SQLException;
+
+    /**
+     * Checks if a station type already exists.
+     *
+     * @param type the type name
+     * @return true if the type exists
+     * @throws SQLException if a database access error occurs
+     */
+    boolean typeExists(String type) throws SQLException;
+
+    /**
+     * Retrieves the head item Base64 for a given type.
+     *
+     * @param type the type name
+     * @return the Base64 string, or null if not found
+     * @throws SQLException if a database access error occurs
+     */
+    String getTypeHeadItem(String type) throws SQLException;
+
+    /**
+     * Retrieves all registered type names.
+     *
+     * @return a list of type name strings
+     * @throws SQLException if a database access error occurs
+     */
+    List<String> getAllTypes() throws SQLException;
 
     /**
      * Closes the database connection or pool.

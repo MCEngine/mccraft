@@ -37,16 +37,14 @@ public class HandleGet implements ICraftCommandHandle {
         Player player = (Player) sender;
         String type = args[0];
         MCCraftProvider provider = MCCraftProvider.getInstance();
-        String headId = type + "/__head__";
 
-        provider.getItem(headId).thenAccept(row -> {
-            if (row == null) {
+        provider.getTypeHeadItem(type).thenAccept(base64 -> {
+            if (base64 == null) {
                 MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.get.not.found")
                         .arguments(Component.text(type)).color(NamedTextColor.RED));
                 return;
             }
 
-            String base64 = row.get("contents");
             ItemStack headItem = ItemSerializer.fromBase64(base64);
             if (headItem == null) {
                 MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.error")

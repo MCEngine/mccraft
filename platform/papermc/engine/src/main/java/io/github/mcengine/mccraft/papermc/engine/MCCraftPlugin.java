@@ -8,6 +8,7 @@ import io.github.mcengine.mccraft.common.command.util.HandleCreate;
 import io.github.mcengine.mccraft.common.command.util.HandleEditor;
 import io.github.mcengine.mccraft.common.command.util.HandleGet;
 import io.github.mcengine.mccraft.common.command.util.HandleHelp;
+import io.github.mcengine.mccraft.common.command.util.HandleType;
 import io.github.mcengine.mccraft.common.database.MCCraftMySQL;
 import io.github.mcengine.mccraft.common.database.MCCraftSQLite;
 import io.github.mcengine.mccraft.common.listener.CraftingGUIListener;
@@ -68,6 +69,7 @@ public class MCCraftPlugin extends JavaPlugin {
 
         // 5. Register Commands
         commandManager.register("help", new HandleHelp(commandManager));
+        commandManager.register("type", new HandleType());
         commandManager.register("create", new HandleCreate());
         commandManager.register("get", new HandleGet());
         commandManager.register("editor", new HandleEditor());

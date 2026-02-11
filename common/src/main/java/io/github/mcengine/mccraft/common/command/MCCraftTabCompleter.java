@@ -19,19 +19,31 @@ public class MCCraftTabCompleter implements TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> subs = new ArrayList<>(Arrays.asList("create", "get", "editor", "help"));
+            List<String> subs = new ArrayList<>(Arrays.asList("type", "create", "get", "editor", "help"));
             return filter(subs, args[0]);
         }
 
         String sub = args[0].toLowerCase();
 
         switch (sub) {
+            case "type": {
+                if (args.length == 2) {
+                    return filter(Collections.singletonList("create"), args[1]);
+                }
+                if (args.length == 3) {
+                    return Collections.singletonList("<type_name>");
+                }
+                if (args.length == 4) {
+                    return Collections.singletonList("<head_item_base64>");
+                }
+                break;
+            }
             case "create": {
                 if (args.length == 2) {
                     return filterTypes(args[1]);
                 }
                 if (args.length == 3) {
-                    return Collections.singletonList("<id_or_base64>");
+                    return Collections.singletonList("<recipe_id>");
                 }
                 break;
             }
@@ -58,7 +70,7 @@ public class MCCraftTabCompleter implements TabCompleter {
         MCCraftProvider provider = MCCraftProvider.getInstance();
         if (provider == null) return Collections.emptyList();
         try {
-            List<String> types = provider.getDb().getTypes();
+            List<String> types = provider.getDb().getAllTypes();
             return filter(types, input);
         } catch (Exception e) {
             return Collections.emptyList();

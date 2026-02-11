@@ -106,6 +106,49 @@ public class MCCraftProvider {
         });
     }
 
+    // --- Async Type Table Wrappers ---
+
+    public CompletableFuture<Void> insertType(String type, String headItemBase64) {
+        return runAsync(() -> {
+            try {
+                db.insertType(type, headItemBase64);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
+    }
+
+    public CompletableFuture<Boolean> typeExists(String type) {
+        return runAsync(() -> {
+            try {
+                return db.typeExists(type);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public CompletableFuture<String> getTypeHeadItem(String type) {
+        return runAsync(() -> {
+            try {
+                return db.getTypeHeadItem(type);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public CompletableFuture<List<String>> getAllTypes() {
+        return runAsync(() -> {
+            try {
+                return db.getAllTypes();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     public void shutdown() {
         if (db != null) db.close();
         instance = null;

@@ -31,7 +31,7 @@ public class MCCraftSQLite implements IMCCraftDB {
 
     @Override
     public void createTable() throws SQLException {
-        String sql = "CREATE TABLE IF NOT EXISTS mccraft_item ("
+        String sqlItem = "CREATE TABLE IF NOT EXISTS mccraft_item ("
                 + "id VARCHAR(255) NOT NULL, "
                 + "type VARCHAR(255) DEFAULT 'default' NOT NULL, "
                 + "contents LONGTEXT, "
@@ -39,8 +39,15 @@ public class MCCraftSQLite implements IMCCraftDB {
                 + "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                 + "PRIMARY KEY (id)"
                 + ");";
+        String sqlType = "CREATE TABLE IF NOT EXISTS mccraft_type ("
+                + "type VARCHAR(255) NOT NULL, "
+                + "head_item LONGTEXT NOT NULL, "
+                + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "PRIMARY KEY (type)"
+                + ");";
         try (Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
+            stmt.execute(sqlItem);
+            stmt.execute(sqlType);
         }
     }
 
@@ -115,6 +122,53 @@ public class MCCraftSQLite implements IMCCraftDB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void insertType(String type, String headItemBase64) throws SQLException {
+        String sql = "INSERT INTO mccraft_type (type, head_item) VALUES (?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, type);
+            ps.setString(2, headItemBase64);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public boolean typeExists(String type) throws SQLException {
+        String sql = "SELECT 1 FROM mccraft_type WHERE type = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, type);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    @Override
+    public String getTypeHeadItem(String type) throws SQLException {
+        String sql = "SELECT head_item FROM mccraft_type WHERE type = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, type);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("head_item");
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List<String> getAllTypes() throws SQLException {
+        String sql = "SELECT type FROM mccraft_type";
+        List<String> types = new ArrayList<>();
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                types.add(rs.getString("type"));
+            }
+        }
+        return types;
     }
 
     private Map<String, String> mapRow(ResultSet rs) throws SQLException {

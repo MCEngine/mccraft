@@ -12,9 +12,15 @@ commands:
     aliases: [mccraft]
 
 permissions:
-  mcengine.mccraft.create.type:
-    description: Allows creating new station types
+  mcengine.mccraft.type:
+    description: Allows registering new station types
     default: op
-  mcengine.mccraft.create.recipe:
+  mcengine.mccraft.create:
     description: Allows creating and editing recipes
+    default: op
+  mcengine.mccraft.get:
+    description: Allows getting head items
+    default: op
+  mcengine.mccraft.editor:
+    description: Allows opening the recipe editor list
     default: op
