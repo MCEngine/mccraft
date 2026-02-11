@@ -1,7 +1,9 @@
 package io.github.mcengine.mccraft.common.listener;
 
+import io.github.mcengine.mccraft.common.util.GUIConstants;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -24,6 +26,16 @@ public class ItemDropProtectionListener implements Listener {
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
+        Player player = event.getPlayer();
+
+        // Only block drops when the player has the crafting GUI open (non-editor)
+        Component viewTitle = player.getOpenInventory().title();
+        if (viewTitle == null) return;
+        String titleText = PlainTextComponentSerializer.plainText().serialize(viewTitle);
+        if (!titleText.startsWith(GUIConstants.CRAFTING_GUI_TITLE)) return;
+        // Editor GUIs contain "[" — allow drops in editor
+        if (titleText.contains("[")) return;
+
         ItemStack item = event.getItemDrop().getItemStack();
         if (item.getType() == Material.AIR) return;
 
@@ -33,7 +45,6 @@ public class ItemDropProtectionListener implements Listener {
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         if (pdc.has(MCCRAFT_TYPE_KEY, PersistentDataType.STRING)) {
             event.setCancelled(true);
-            Player player = event.getPlayer();
             player.sendMessage(Component.translatable("mcengine.mccraft.msg.drop.protected")
                     .color(NamedTextColor.RED));
         }
