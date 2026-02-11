@@ -67,34 +67,16 @@ public final class CraftingGUI {
     }
 
     /**
-     * Opens the crafting GUI for a player to use a recipe (not edit).
+     * Opens an empty crafting GUI for a player to place ingredients.
+     * The result slot will be populated dynamically when the recipe matches.
      *
-     * @param player   the player
-     * @param type     the station type
-     * @param recipeId the recipe identifier
-     * @param row      the database row
+     * @param player the player
+     * @param type   the station type
      */
-    public static void openCraftingView(Player player, String type, String recipeId, Map<String, String> row) {
+    public static void openCraftingView(Player player, String type) {
         Component title = Component.text(GUIConstants.CRAFTING_GUI_TITLE + " - " + type);
         Inventory inv = Bukkit.createInventory(null, GUIConstants.GUI_SIZE, title);
         fillFiller(inv);
-
-        String contents = row.get("contents");
-        if (contents != null && !contents.isEmpty()) {
-            ItemStack[] decoded = ItemSerializer.arrayFromBase64(contents);
-            if (decoded != null) {
-                int[] recipeSlots = GUIConstants.RECIPE_SLOTS;
-                for (int i = 0; i < recipeSlots.length && i < decoded.length; i++) {
-                    if (decoded[i] != null) {
-                        inv.setItem(recipeSlots[i], decoded[i]);
-                    }
-                }
-                if (decoded.length > 9 && decoded[9] != null) {
-                    inv.setItem(GUIConstants.RESULT_SLOT, decoded[9]);
-                }
-            }
-        }
-
         player.openInventory(inv);
     }
 

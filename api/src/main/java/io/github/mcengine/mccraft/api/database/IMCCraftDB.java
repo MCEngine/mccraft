@@ -98,6 +98,22 @@ public interface IMCCraftDB {
     List<String> getAllTypes() throws SQLException;
 
     /**
+     * Retrieves all item/recipe records from the database.
+     *
+     * @return a list of maps, each representing a row with id, type, contents
+     * @throws SQLException if a database access error occurs
+     */
+    List<Map<String, String>> getAllItems() throws SQLException;
+
+    /**
+     * Retrieves all registered types with their head item Base64.
+     *
+     * @return a list of maps, each with type and head_item keys
+     * @throws SQLException if a database access error occurs
+     */
+    List<Map<String, String>> getAllTypesWithHeadItems() throws SQLException;
+
+    /**
      * Closes the database connection or pool.
      */
     void close();

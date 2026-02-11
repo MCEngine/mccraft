@@ -81,6 +81,12 @@ public class MCCraftPlugin extends JavaPlugin {
             craftCommand.setTabCompleter(new MCCraftTabCompleter());
         }
 
+        // 5.5 Populate in-memory cache from database
+        this.provider.populateCache().exceptionally(ex -> {
+            getLogger().severe("Failed to populate recipe cache: " + ex.getMessage());
+            return null;
+        });
+
         // 6. Register Listeners
         listenerManager.register(new CraftingGUIListener());
         listenerManager.register(new EditorListGUIListener());

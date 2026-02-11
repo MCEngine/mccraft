@@ -1,6 +1,6 @@
 package io.github.mcengine.mccraft.common.listener;
 
-import io.github.mcengine.mccraft.common.MCCraftProvider;
+import io.github.mcengine.mccraft.common.cache.RecipeCache;
 import io.github.mcengine.mccraft.common.gui.CraftingGUI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -38,29 +38,16 @@ public class HeadItemInteractListener implements Listener {
         // Cancel the interaction (prevent placing the head)
         event.setCancelled(true);
 
-        MCCraftProvider provider = MCCraftProvider.getInstance();
-        if (provider == null) return;
+        // Check cache for recipes of this type
+        RecipeCache cache = RecipeCache.getInstance();
+        if (cache.getRecipes(type).isEmpty()) {
+            player.sendMessage(Component.translatable("mcengine.mccraft.msg.craft.no.recipes")
+                    .arguments(Component.text(type)).color(NamedTextColor.RED));
+            return;
+        }
 
-        // Load recipes for this type and open the first one as a crafting view
-        provider.getItemsByType(type).thenAccept(items -> {
-            if (items == null || items.isEmpty()) {
-                player.sendMessage(Component.translatable("mcengine.mccraft.msg.craft.no.recipes")
-                        .arguments(Component.text(type)).color(NamedTextColor.RED));
-                return;
-            }
-
-            // Open the first recipe as a crafting view on the main thread
-            var firstRow = items.get(0);
-            String recipeId = firstRow.get("id");
-            player.getServer().getScheduler().runTask(
-                    player.getServer().getPluginManager().getPlugin("MCCraft"),
-                    () -> CraftingGUI.openCraftingView(player, type, recipeId, firstRow)
-            );
-        }).exceptionally(ex -> {
-            player.sendMessage(Component.translatable("mcengine.mccraft.msg.error")
-                    .arguments(Component.text(ex.getMessage())).color(NamedTextColor.RED));
-            return null;
-        });
+        // Open an empty crafting view — player places ingredients, result appears dynamically
+        CraftingGUI.openCraftingView(player, type);
     }
 
     @EventHandler

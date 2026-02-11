@@ -1,6 +1,7 @@
 package io.github.mcengine.mccraft.common;
 
 import io.github.mcengine.mccraft.api.database.IMCCraftDB;
+import io.github.mcengine.mccraft.common.cache.RecipeCache;
 import io.github.mcengine.mccraft.common.command.MCCraftCommandManager;
 import io.github.mcengine.mccraft.common.listener.MCCraftListenerManager;
 
@@ -32,6 +33,23 @@ public class MCCraftProvider {
         instance = this;
     }
 
+    /**
+     * Populates the in-memory cache from the database.
+     * Should be called once after construction, on an async thread.
+     */
+    public CompletableFuture<Void> populateCache() {
+        return runAsync(() -> {
+            try {
+                RecipeCache cache = RecipeCache.getInstance();
+                cache.loadRecipes(db.getAllItems());
+                cache.loadTypes(db.getAllTypesWithHeadItems());
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
+    }
+
     public static MCCraftProvider getInstance() {
         return instance;
     }
@@ -58,6 +76,7 @@ public class MCCraftProvider {
         return runAsync(() -> {
             try {
                 db.upsertItem(id, type, contents);
+                RecipeCache.getInstance().putRecipe(id, type, contents);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -99,6 +118,7 @@ public class MCCraftProvider {
         return runAsync(() -> {
             try {
                 db.deleteItem(id);
+                RecipeCache.getInstance().removeRecipe(id);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -112,6 +132,7 @@ public class MCCraftProvider {
         return runAsync(() -> {
             try {
                 db.insertType(type, headItemBase64);
+                RecipeCache.getInstance().putType(type, headItemBase64);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }

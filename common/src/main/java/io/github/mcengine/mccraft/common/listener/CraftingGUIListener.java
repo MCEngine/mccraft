@@ -1,11 +1,13 @@
 package io.github.mcengine.mccraft.common.listener;
 
 import io.github.mcengine.mccraft.common.MCCraftProvider;
+import io.github.mcengine.mccraft.common.cache.RecipeCache;
 import io.github.mcengine.mccraft.common.gui.CraftingGUI;
 import io.github.mcengine.mccraft.common.util.GUIConstants;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -25,8 +27,8 @@ import org.bukkit.persistence.PersistentDataType;
  * Handles interactions within the MCCraft crafting GUI.
  * <p>
  * For editor GUIs (title contains "["), closing saves the recipe.
- * For crafting view GUIs, clicking the result slot validates the head item
- * and decrements it.
+ * For crafting view GUIs, players place ingredients in recipe slots;
+ * the result slot is dynamically populated when the grid matches a cached recipe.
  */
 public class CraftingGUIListener implements Listener {
 
@@ -42,33 +44,36 @@ public class CraftingGUIListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
+        boolean isEditor = titleText.contains("[");
 
-        // If clicking inside the top inventory
-        if (slot >= 0 && slot < GUIConstants.GUI_SIZE) {
-            boolean isEditor = titleText.contains("[");
-
-            // Allow interaction only on recipe slots and result slot
-            if (GUIConstants.isRecipeSlot(slot) || slot == GUIConstants.RESULT_SLOT) {
-                if (!isEditor && slot == GUIConstants.RESULT_SLOT) {
-                    // Crafting view: player is trying to take the result
-                    handleCraftResult(event, player, titleText);
-                }
-                // In editor mode, allow free interaction with recipe/result slots
-                // In crafting view, allow interaction with recipe slots (they show items but are locked)
-                if (!isEditor && GUIConstants.isRecipeSlot(slot)) {
-                    event.setCancelled(true);
-                }
-            } else {
-                // Filler slots — always cancel
-                event.setCancelled(true);
-            }
-        }
         // Prevent Q-drop and cursor-drop while in crafting GUI
         if (event.getAction() == InventoryAction.DROP_ALL_SLOT
                 || event.getAction() == InventoryAction.DROP_ONE_SLOT
                 || event.getAction() == InventoryAction.DROP_ALL_CURSOR
                 || event.getAction() == InventoryAction.DROP_ONE_CURSOR) {
             event.setCancelled(true);
+            return;
+        }
+
+        // Clicking inside the top inventory
+        if (slot >= 0 && slot < GUIConstants.GUI_SIZE) {
+            if (GUIConstants.isRecipeSlot(slot)) {
+                // Recipe slots: allow interaction in both editor and crafting view
+                // After the click resolves, update the result slot in crafting view
+                if (!isEditor) {
+                    scheduleRecipeCheck(event.getView().getTopInventory(), titleText);
+                }
+            } else if (slot == GUIConstants.RESULT_SLOT) {
+                if (isEditor) {
+                    // Editor: allow free interaction with result slot
+                } else {
+                    // Crafting view: handle taking the result
+                    handleCraftResult(event, player, titleText);
+                }
+            } else {
+                // Filler slots — always cancel
+                event.setCancelled(true);
+            }
         }
     }
 
@@ -80,6 +85,8 @@ public class CraftingGUIListener implements Listener {
         String dragTitleText = PlainTextComponentSerializer.plainText().serialize(dragTitle);
         if (!dragTitleText.startsWith(GUIConstants.CRAFTING_GUI_TITLE)) return;
 
+        boolean isEditor = dragTitleText.contains("[");
+
         // Cancel drag into filler slots
         for (int rawSlot : event.getRawSlots()) {
             if (rawSlot >= 0 && rawSlot < GUIConstants.GUI_SIZE
@@ -87,6 +94,11 @@ public class CraftingGUIListener implements Listener {
                 event.setCancelled(true);
                 return;
             }
+        }
+
+        // In crafting view, schedule a recipe check after drag
+        if (!isEditor) {
+            scheduleRecipeCheck(event.getView().getTopInventory(), dragTitleText);
         }
     }
 
@@ -124,39 +136,104 @@ public class CraftingGUIListener implements Listener {
     }
 
     /**
-     * Handles the logic when a player clicks the result slot in a crafting view.
-     * Validates the head item requirement and decrements it.
+     * Schedules a recipe match check on the next tick (after the click/drag resolves).
      */
-    private void handleCraftResult(InventoryClickEvent event, Player player, String title) {
-        // Parse type from title: "MCCraft - {type}"
-        String type = title.substring(title.indexOf("-") + 2).trim();
+    private void scheduleRecipeCheck(Inventory inv, String titleText) {
+        Bukkit.getScheduler().runTask(
+                Bukkit.getPluginManager().getPlugin("MCCraft"),
+                () -> updateResultSlot(inv, titleText)
+        );
+    }
 
-        // Default type doesn't need a head item
-        if ("default".equalsIgnoreCase(type)) return;
+    /**
+     * Reads the 9 recipe slots from the inventory, matches against the cache,
+     * and sets or clears the result slot accordingly.
+     */
+    private void updateResultSlot(Inventory inv, String titleText) {
+        String type = titleText.substring(titleText.indexOf("-") + 2).trim();
 
-        // Check for head item in player's inventory
-        ItemStack headItem = findHeadItem(player, type);
-        if (headItem == null) {
-            event.setCancelled(true);
-            player.sendMessage(Component.translatable("mcengine.mccraft.msg.craft.no.head")
-                    .arguments(Component.text(type)).color(NamedTextColor.RED));
-            return;
+        int[] recipeSlots = GUIConstants.RECIPE_SLOTS;
+        ItemStack[] playerGrid = new ItemStack[9];
+        for (int i = 0; i < 9; i++) {
+            ItemStack item = inv.getItem(recipeSlots[i]);
+            playerGrid[i] = (item == null || item.getType() == Material.AIR
+                    || item.getType() == Material.RED_STAINED_GLASS_PANE) ? null : item;
         }
 
-        // Decrement the head item
-        if (headItem.getAmount() > 1) {
-            headItem.setAmount(headItem.getAmount() - 1);
+        RecipeCache.CachedRecipe match = RecipeCache.getInstance().matchRecipe(type, playerGrid);
+        if (match != null && match.getResult() != null) {
+            inv.setItem(GUIConstants.RESULT_SLOT, match.getResult().clone());
         } else {
-            player.getInventory().remove(headItem);
+            inv.setItem(GUIConstants.RESULT_SLOT, null);
         }
     }
 
     /**
+     * Handles the logic when a player clicks the result slot in a crafting view.
+     * Validates the head item requirement, decrements ingredients, and gives the result.
+     */
+    private void handleCraftResult(InventoryClickEvent event, Player player, String titleText) {
+        String type = titleText.substring(titleText.indexOf("-") + 2).trim();
+        Inventory inv = event.getView().getTopInventory();
+
+        // Read the current grid
+        int[] recipeSlots = GUIConstants.RECIPE_SLOTS;
+        ItemStack[] playerGrid = new ItemStack[9];
+        for (int i = 0; i < 9; i++) {
+            ItemStack item = inv.getItem(recipeSlots[i]);
+            playerGrid[i] = (item == null || item.getType() == Material.AIR
+                    || item.getType() == Material.RED_STAINED_GLASS_PANE) ? null : item;
+        }
+
+        RecipeCache.CachedRecipe match = RecipeCache.getInstance().matchRecipe(type, playerGrid);
+        if (match == null || match.getResult() == null) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Check for head item in player's inventory (non-default types)
+        if (!"default".equalsIgnoreCase(type)) {
+            ItemStack headItem = findHeadItem(player, type);
+            if (headItem == null) {
+                event.setCancelled(true);
+                player.sendMessage(Component.translatable("mcengine.mccraft.msg.craft.no.head")
+                        .arguments(Component.text(type)).color(NamedTextColor.RED));
+                return;
+            }
+            // Decrement the head item
+            if (headItem.getAmount() > 1) {
+                headItem.setAmount(headItem.getAmount() - 1);
+            } else {
+                player.getInventory().remove(headItem);
+            }
+        }
+
+        // Decrement ingredients from the grid
+        ItemStack[] recipeGrid = match.getGrid();
+        for (int i = 0; i < 9; i++) {
+            if (recipeGrid[i] != null && !recipeGrid[i].getType().isAir()) {
+                ItemStack slotItem = inv.getItem(recipeSlots[i]);
+                if (slotItem != null) {
+                    int remaining = slotItem.getAmount() - recipeGrid[i].getAmount();
+                    if (remaining <= 0) {
+                        inv.setItem(recipeSlots[i], null);
+                    } else {
+                        slotItem.setAmount(remaining);
+                    }
+                }
+            }
+        }
+
+        // Give the result to the cursor
+        event.setCancelled(true);
+        player.setItemOnCursor(match.getResult().clone());
+
+        // Re-check recipe after consuming ingredients
+        scheduleRecipeCheck(inv, titleText);
+    }
+
+    /**
      * Finds the head item with the matching mccraft_type in the player's inventory.
-     *
-     * @param player the player
-     * @param type   the required type value
-     * @return the matching ItemStack, or null if not found
      */
     private ItemStack findHeadItem(Player player, String type) {
         for (ItemStack item : player.getInventory().getContents()) {

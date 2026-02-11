@@ -171,6 +171,33 @@ public class MCCraftSQLite implements IMCCraftDB {
         return types;
     }
 
+    @Override
+    public List<Map<String, String>> getAllItems() throws SQLException {
+        String sql = "SELECT * FROM mccraft_item";
+        List<Map<String, String>> results = new ArrayList<>();
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                results.add(mapRow(rs));
+            }
+        }
+        return results;
+    }
+
+    @Override
+    public List<Map<String, String>> getAllTypesWithHeadItems() throws SQLException {
+        String sql = "SELECT type, head_item FROM mccraft_type";
+        List<Map<String, String>> results = new ArrayList<>();
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Map<String, String> row = new HashMap<>();
+                row.put("type", rs.getString("type"));
+                row.put("head_item", rs.getString("head_item"));
+                results.add(row);
+            }
+        }
+        return results;
+    }
+
     private Map<String, String> mapRow(ResultSet rs) throws SQLException {
         Map<String, String> row = new HashMap<>();
         row.put("id", rs.getString("id"));
