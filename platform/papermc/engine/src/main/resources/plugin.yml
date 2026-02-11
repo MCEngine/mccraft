@@ -4,3 +4,23 @@ description: ${engine_description}
 version: ${engine_version}
 website: ${engine_website}
 api-version: '1.21'
+
+commands:
+  craft:
+    description: MCCraft crafting system commands
+    usage: /craft <subcommand> [args...]
+    aliases: [mccraft]
+
+permissions:
+  mcengine.mccraft.type:
+    description: Allows registering new station types
+    default: op
+  mcengine.mccraft.create:
+    description: Allows creating and editing recipes
+    default: op
+  mcengine.mccraft.get:
+    description: Allows getting head items
+    default: op
+  mcengine.mccraft.editor:
+    description: Allows opening the recipe editor list
+    default: op

@@ -1,7 +1,24 @@
 package io.github.mcengine.mccraft.papermc.engine;
 
+import io.github.mcengine.mccraft.api.database.IMCCraftDB;
+import io.github.mcengine.mccraft.common.MCCraftProvider;
+import io.github.mcengine.mccraft.common.command.MCCraftCommandManager;
+import io.github.mcengine.mccraft.common.command.MCCraftTabCompleter;
+import io.github.mcengine.mccraft.common.command.util.HandleCreate;
+import io.github.mcengine.mccraft.common.command.util.HandleEditor;
+import io.github.mcengine.mccraft.common.command.util.HandleGet;
+import io.github.mcengine.mccraft.common.command.util.HandleHelp;
+import io.github.mcengine.mccraft.common.command.util.HandleType;
+import io.github.mcengine.mccraft.common.database.MCCraftMySQL;
+import io.github.mcengine.mccraft.common.database.MCCraftSQLite;
+import io.github.mcengine.mccraft.common.listener.CraftingGUIListener;
+import io.github.mcengine.mccraft.common.listener.EditorListGUIListener;
+import io.github.mcengine.mccraft.common.listener.HeadItemInteractListener;
+import io.github.mcengine.mccraft.common.listener.ItemDropProtectionListener;
+import io.github.mcengine.mccraft.common.listener.MCCraftListenerManager;
 import io.github.mcengine.mcextension.common.MCExtensionManager;
 import org.bukkit.Bukkit;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -26,6 +43,11 @@ public class MCCraftPlugin extends JavaPlugin {
     private Executor executor;
 
     /**
+     * The central provider for MCCraft systems.
+     */
+    private MCCraftProvider provider;
+
+    /**
      * Called when the plugin is enabled.
      * Initializes configuration, core components, services, and registers handlers.
      */
@@ -36,15 +58,63 @@ public class MCCraftPlugin extends JavaPlugin {
 
         this.executor = setupExecutor();
 
-        // Initialize Extension Manager
+        // 2. Initialize Database
+        IMCCraftDB db = setupDatabase();
+
+        // 3. Initialize Command & Listener Managers
+        MCCraftCommandManager commandManager = new MCCraftCommandManager();
+        MCCraftListenerManager listenerManager = new MCCraftListenerManager(this);
+
+        // 4. Create Provider (singleton)
+        this.provider = new MCCraftProvider(db, executor, commandManager, listenerManager);
+
+        // 5. Register Commands
+        commandManager.register("help", new HandleHelp(commandManager));
+        commandManager.register("type", new HandleType());
+        commandManager.register("create", new HandleCreate());
+        commandManager.register("get", new HandleGet());
+        commandManager.register("editor", new HandleEditor());
+
+        PluginCommand craftCommand = getCommand("craft");
+        if (craftCommand != null) {
+            craftCommand.setExecutor(commandManager);
+            craftCommand.setTabCompleter(new MCCraftTabCompleter());
+        }
+
+        // 5.5 Populate in-memory cache from database
+        this.provider.populateCache().exceptionally(ex -> {
+            getLogger().severe("Failed to populate recipe cache: " + ex.getMessage());
+            return null;
+        });
+
+        // 6. Register Listeners
+        listenerManager.register(new CraftingGUIListener());
+        listenerManager.register(new EditorListGUIListener());
+        listenerManager.register(new ItemDropProtectionListener());
+        listenerManager.register(new HeadItemInteractListener());
+
+        // 7. Initialize Extension Manager
         this.extensionManager = new MCExtensionManager();
-
         Bukkit.getServicesManager().register(MCExtensionManager.class, extensionManager, this, ServicePriority.Normal);
-
-        // 5. Load Extensions
         extensionManager.loadAllExtensions(this, this.executor);
 
         getLogger().info("MCCraft Engine has been enabled!");
+    }
+
+    /**
+     * Sets up the database based on the config.yml db.type setting.
+     *
+     * @return the initialized database implementation
+     */
+    private IMCCraftDB setupDatabase() {
+        String dbType = getConfig().getString("db.type", "sqlite");
+        if ("mysql".equalsIgnoreCase(dbType)) {
+            getLogger().info("Using MySQL database backend.");
+            return new MCCraftMySQL(this);
+        } else {
+            getLogger().info("Using SQLite database backend.");
+            return new MCCraftSQLite(this);
+        }
     }
 
     /**
@@ -72,6 +142,11 @@ public class MCCraftPlugin extends JavaPlugin {
         // Shutdown extensions first
         if (extensionManager != null) {
             extensionManager.disableAllExtensions(this, this.executor);
+        }
+
+        // Shutdown provider (closes DB)
+        if (provider != null) {
+            provider.shutdown();
         }
 
         getLogger().info("MCCraft Engine has been disabled!");
