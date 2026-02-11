@@ -44,11 +44,23 @@ public class HandleCreate implements ICraftCommandHandle {
                 return;
             }
 
-            // Open the crafting editor GUI on the main thread
-            player.getServer().getScheduler().runTask(
-                    player.getServer().getPluginManager().getPlugin("MCCraft"),
-                    () -> CraftingGUI.openEditor(player, type, recipeId)
-            );
+            provider.getItem(recipeId).thenAccept(existing -> {
+                if (existing != null) {
+                    MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.create.id.exists")
+                            .arguments(Component.text(recipeId)).color(NamedTextColor.RED));
+                    return;
+                }
+
+                // Open the crafting editor GUI on the main thread
+                player.getServer().getScheduler().runTask(
+                        player.getServer().getPluginManager().getPlugin("MCCraft"),
+                        () -> CraftingGUI.openEditor(player, type, recipeId)
+                );
+            }).exceptionally(ex -> {
+                MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.error")
+                        .arguments(Component.text(ex.getMessage())).color(NamedTextColor.RED));
+                return null;
+            });
         }).exceptionally(ex -> {
             MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.error")
                     .arguments(Component.text(ex.getMessage())).color(NamedTextColor.RED));

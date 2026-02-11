@@ -48,7 +48,6 @@ public final class ItemSerializer {
                 return (ItemStack) bois.readObject();
             }
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }
