@@ -38,11 +38,6 @@ public class HandleCreate implements ICraftCommandHandle {
 
             if (!typeExists) {
                 // Mode 1: Register new station type — secondArg is head_item_base64
-                if (!sender.hasPermission("mcengine.mccraft.create.type")) {
-                    MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.permission.denied")
-                            .color(NamedTextColor.RED));
-                    return;
-                }
                 String headId = type + "/__head__";
                 provider.saveItem(headId, type, secondArg).thenRun(() ->
                         MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.create.type.success")
@@ -54,11 +49,6 @@ public class HandleCreate implements ICraftCommandHandle {
                 });
             } else {
                 // Mode 2: Create/edit a recipe — secondArg is recipe id
-                if (!sender.hasPermission("mcengine.mccraft.create.recipe")) {
-                    MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.permission.denied")
-                            .color(NamedTextColor.RED));
-                    return;
-                }
                 if (!(sender instanceof Player)) {
                     MCCraftCommandManager.send(sender, Component.translatable("mcengine.mccraft.msg.player.only")
                             .color(NamedTextColor.RED));
@@ -86,6 +76,7 @@ public class HandleCreate implements ICraftCommandHandle {
 
     @Override
     public String getPermission() {
-        return null;
+        // Single gate handled by MCCraftCommandManager; covers both type registration and recipe editing paths
+        return "mcengine.mccraft.create";
     }
 }
