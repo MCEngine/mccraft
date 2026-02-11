@@ -1,5 +1,5 @@
 name: ${engine_name}
-main: ${project_group}.template.papermc.engine.Template
+main: ${project_group}.papermc.engine.MCCraftPlugin
 description: ${engine_description}
 version: ${engine_version}
 website: ${engine_website}

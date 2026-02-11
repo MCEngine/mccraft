@@ -1,10 +1,10 @@
-package io.github.mcengine.template.gradle
+package io.github.mcengine.mccraft.gradle
 
 import org.gradle.api.Project
 
 class VersionCalculator {
     static String calculate(Project project) {
-        String propName = "template-${project.name}"
+        String propName = "mccraft-${project.name}"
         
         // 1. Detect Build Environment
         String buildNum = System.getenv("BUILD_NUMBER")

@@ -1,4 +1,4 @@
-import io.github.mcengine.template.gradle.VersionCalculator
+import io.github.mcengine.mccraft.gradle.VersionCalculator
 
 // Apply standard plugins
 plugins {
@@ -24,7 +24,7 @@ tasks.named('jar') {
 
 // 3. Shadow Jar Config
 tasks.named('shadowJar') {
-    String propName = "template-${project.name}"
+    String propName = "mccraft-${project.name}"
     
     // Determine Base Name
     String finalBaseName = project.name
