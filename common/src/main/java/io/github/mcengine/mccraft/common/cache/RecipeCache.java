@@ -190,8 +190,8 @@ public final class RecipeCache {
             ItemStack expected = recipeGrid[i];
             ItemStack actual = playerGrid[i];
 
-            boolean expectedEmpty = expected == null || expected.getType().isAir();
-            boolean actualEmpty = actual == null || actual.getType().isAir();
+            boolean expectedEmpty = isEmpty(expected);
+            boolean actualEmpty = isEmpty(actual);
 
             if (expectedEmpty && actualEmpty) continue;
             if (expectedEmpty || actualEmpty) return false;
@@ -199,5 +199,9 @@ public final class RecipeCache {
             if (actual.getAmount() < expected.getAmount()) return false;
         }
         return true;
+    }
+
+    private boolean isEmpty(ItemStack item) {
+        return item == null || item.getType().isAir();
     }
 }
