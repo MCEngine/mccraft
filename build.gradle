@@ -1,0 +1,49 @@
+/**
+ * Template Root Configuration
+ */
+
+// 1. DISABLE ROOT BUILD
+tasks.register('jar') { enabled = false }
+
+allprojects {
+    group = project.property('project-group')
+    
+    repositories {
+        mavenCentral()
+        maven {
+            name = 'papermc'
+            url = 'https://repo.papermc.io/repository/maven-public/'
+        }
+    }
+}
+
+subprojects {
+    // LEAF PROJECT CHECK
+    // Only apply the module logic to projects that have no children
+    if (project.childProjects.isEmpty()) {
+        apply plugin: 'template.module'
+    }
+}
+
+// 2. PUBLISHING ORDER LOGIC
+gradle.projectsEvaluated {
+    def apiProject = findProject(':api')
+    def commonProject = findProject(':common')
+    def engineProject = findProject(':platform:papermc:engine')
+
+    if (apiProject && commonProject) {
+        def apiPublish = apiProject.tasks.findByName('publish')
+        def commonPublish = commonProject.tasks.findByName('publish')
+
+        if (apiPublish && commonPublish) {
+            commonPublish.mustRunAfter(apiPublish)
+            
+            if (engineProject) {
+                def enginePublish = engineProject.tasks.findByName('publish')
+                if (enginePublish) {
+                    enginePublish.mustRunAfter(commonPublish)
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,64 @@
+/**
+ * Template Common Module
+ * Shared logic and internal utilities for the Template ecosystem.
+ */
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+dependencies {
+    api project(':api')
+
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+    
+    // Common needs this to convert Components to Strings for Spigot console/chat
+    compileOnly 'net.kyori:adventure-text-serializer-legacy:4.26.1'
+
+    implementation 'com.zaxxer:HikariCP:7.0.2'
+}
+
+// Define variables for cleaner URL construction
+def gitOwner = project.property('git-org-name')
+def gitRepo = project.property('git-org-repository')
+def gitUrl = project.property('template-common-artifact-url')
+
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            artifactId = project.property('template-common-artifact-id')
+            artifact shadowJar
+
+            pom {
+                name = project.property('template-common-name')
+                description = project.property('template-common-artifact-description')
+                url = gitUrl
+
+                developers {
+                    developer {
+                        id = 'jetsadawijit'
+                        url = 'https://jetsadawijit.github.io'
+                    }
+                }
+
+                scm {
+                    connection = "scm:git:git://github.com/${gitOwner}/${gitRepo}.git"
+                    developerConnection = "scm:git:ssh://github.com/${gitOwner}/${gitRepo}.git"
+                    url = gitUrl
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${gitOwner}/${gitRepo}")
+
+            credentials {
+                username = System.getenv("USER_GITHUB_NAME")
+                password = System.getenv("USER_GITHUB_TOKEN")
+            }
+        }
+    }
+}

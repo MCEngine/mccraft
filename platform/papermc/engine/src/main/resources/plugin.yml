@@ -1,0 +1,6 @@
+name: ${engine_name}
+main: ${project_group}.template.papermc.engine.Template
+description: ${engine_description}
+version: ${engine_version}
+website: ${engine_website}
+api-version: '1.21'

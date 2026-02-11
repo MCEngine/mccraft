@@ -1,0 +1,39 @@
+# --- [ Gradle ] ---
+.gradle/
+build/
+/bin/
+bin/
+
+# --- [ Java / IDEs ] ---
+*.class
+*.log
+*.war
+*.zip
+.project
+.classpath
+.settings/
+.factorypath
+
+# Exception for gradle wrapper jar
+!gradle/wrapper/gradle-wrapper.jar
+*.jar
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# VS Code
+.vscode/
+.history/
+
+# --- [ Project Specifics ] ---
+# Don't ignore the actual ShadowJars you want to keep, 
+# but ignore the temp build outputs in submodules
+**/build/
+**/out/
+
+# --- [ OS / Miscellaneous ] ---
+.DS_Store
+Thumbs.db
