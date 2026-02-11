@@ -1,6 +1,6 @@
 /**
- * Template Common Module
- * Shared logic and internal utilities for the Template ecosystem.
+ * MCCraft Common Module
+ * Shared logic and internal utilities for the MCCraft ecosystem.
  */
 plugins {
     id 'java-library'
@@ -21,17 +21,17 @@ dependencies {
 // Define variables for cleaner URL construction
 def gitOwner = project.property('git-org-name')
 def gitRepo = project.property('git-org-repository')
-def gitUrl = project.property('template-common-artifact-url')
+def gitUrl = project.property('mccraft-common-artifact-url')
 
 publishing {
     publications {
         create('mavenJava', MavenPublication) {
-            artifactId = project.property('template-common-artifact-id')
+            artifactId = project.property('mccraft-common-artifact-id')
             artifact shadowJar
 
             pom {
-                name = project.property('template-common-name')
-                description = project.property('template-common-artifact-description')
+                name = project.property('mccraft-common-name')
+                description = project.property('mccraft-common-artifact-description')
                 url = gitUrl
 
                 developers {

@@ -1,5 +1,5 @@
 /**
- * Template Root Configuration
+ * MCCraft Root Configuration
  */
 
 // 1. DISABLE ROOT BUILD
@@ -21,7 +21,7 @@ subprojects {
     // LEAF PROJECT CHECK
     // Only apply the module logic to projects that have no children
     if (project.childProjects.isEmpty()) {
-        apply plugin: 'template.module'
+        apply plugin: 'mccraft.module'
     }
 }
 

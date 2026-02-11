@@ -1,4 +1,4 @@
-package io.github.mcengine.template.papermc.engine;
+package io.github.mcengine.mccraft.papermc.engine;
 
 import io.github.mcengine.mcextension.common.MCExtensionManager;
 import org.bukkit.Bukkit;
@@ -8,12 +8,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.concurrent.Executor;
 
 /**
- * Main class for the Template plugin.
+ * Main class for the MCCraft plugin.
  * <p>
- * This class handles the initialization of the MCExtensionManager and 
+ * This class handles the initialization of the MCExtensionManager and
  * sets up the appropriate task executor for the platform (Bukkit or Folia).
  */
-public class Template extends JavaPlugin {
+public class MCCraftPlugin extends JavaPlugin {
 
     /**
      * The manager handling loading and lifecycle of MCExtensions.
@@ -44,7 +44,7 @@ public class Template extends JavaPlugin {
         // 5. Load Extensions
         extensionManager.loadAllExtensions(this, this.executor);
 
-        getLogger().info("Template Engine has been enabled!");
+        getLogger().info("MCCraft Engine has been enabled!");
     }
 
     /**
@@ -74,6 +74,6 @@ public class Template extends JavaPlugin {
             extensionManager.disableAllExtensions(this, this.executor);
         }
 
-        getLogger().info("Template Engine has been disabled!");
+        getLogger().info("MCCraft Engine has been disabled!");
     }
 }

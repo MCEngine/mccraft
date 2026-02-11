@@ -1,6 +1,6 @@
 /**
- * Template Engine Module
- * Primary implementation of the Template system for PaperMC.
+ * MCCraft Engine Module
+ * Primary implementation of the MCCraft system for PaperMC.
  */
 plugins {
     id 'java-library'
@@ -18,7 +18,7 @@ dependencies {
 // Define variables for cleaner URL construction
 def gitOwner = project.property('git-org-name')
 def gitRepo = project.property('git-org-repository')
-def gitUrl = project.property('template-engine-artifact-url')
+def gitUrl = project.property('mccraft-engine-artifact-url')
 
 /**
  * Configure repositories for dependency resolution.
@@ -44,11 +44,11 @@ repositories {
  */
 processResources {
     def props = [
-        'engine_name'       : project.property('template-engine-name'),
+        'engine_name'       : project.property('mccraft-engine-name'),
         'project_group'     : project.group,
-        'engine_description': project.property('template-engine-artifact-description'),
+        'engine_description': project.property('mccraft-engine-artifact-description'),
         'engine_version'    : project.version,
-        'engine_website'    : project.property('template-engine-artifact-url')
+        'engine_website'    : project.property('mccraft-engine-artifact-url')
     ]
     inputs.properties(props)
     filteringCharset 'UTF-8'

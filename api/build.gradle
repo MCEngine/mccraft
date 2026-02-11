@@ -1,6 +1,6 @@
 /**
- * Template API Module
- * Public interfaces for the Template ecosystem.
+ * MCCraft API Module
+ * Public interfaces for the MCCraft ecosystem.
  */
 plugins {
     id 'java-library'
@@ -18,17 +18,17 @@ dependencies {
 // Define variables for cleaner URL construction
 def gitOwner = project.property('git-org-name')
 def gitRepo = project.property('git-org-repository')
-def gitUrl = project.property('template-api-artifact-url')
+def gitUrl = project.property('mccraft-api-artifact-url')
 
 publishing {
     publications {
         create('mavenJava', MavenPublication) {
-            artifactId = project.property('template-api-artifact-id')
+            artifactId = project.property('mccraft-api-artifact-id')
             artifact shadowJar
 
             pom {
-                name = project.property('template-api-name')
-                description = project.property('template-api-artifact-description')
+                name = project.property('mccraft-api-name')
+                description = project.property('mccraft-api-artifact-description')
                 url = gitUrl
 
                 developers {

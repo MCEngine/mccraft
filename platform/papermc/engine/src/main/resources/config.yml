@@ -5,13 +5,13 @@ db:
   # Settings for local SQLite database
   sqlite:
     # The name of the database file inside the plugin folder
-    path: template.db
+    path: mccraft.db
   
   # Settings for external MySQL/MariaDB database
   mysql:
     host: localhost
     port: "3306"
-    database: template
+    database: mccraft
     user: root
-    password: template
+    password: mccraft
     ssl: "false"

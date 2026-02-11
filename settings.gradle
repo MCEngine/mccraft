@@ -1,4 +1,4 @@
-rootProject.name = "template"
+rootProject.name = "mccraft"
 
 // Standard modules
 include 'api', 'common'
