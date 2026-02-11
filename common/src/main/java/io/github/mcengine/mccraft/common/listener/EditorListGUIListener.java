@@ -5,6 +5,7 @@ import io.github.mcengine.mccraft.common.gui.CraftingGUI;
 import io.github.mcengine.mccraft.common.util.GUIConstants;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,8 +22,10 @@ public class EditorListGUIListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        String title = event.getView().getTitle();
-        if (!title.startsWith(GUIConstants.EDITOR_LIST_TITLE)) return;
+        Component title = event.getView().title();
+        if (title == null) return;
+        String titleText = PlainTextComponentSerializer.plainText().serialize(title);
+        if (!titleText.startsWith(GUIConstants.EDITOR_LIST_TITLE)) return;
 
         event.setCancelled(true);
 
@@ -43,7 +46,7 @@ public class EditorListGUIListener implements Listener {
         String recipeId = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(displayName);
 
         // Parse type from title: "MCCraft Editor - {type}"
-        String type = title.substring(title.indexOf("-") + 2).trim();
+        String type = titleText.substring(titleText.indexOf("-") + 2).trim();
 
         MCCraftProvider provider = MCCraftProvider.getInstance();
         if (provider == null) return;

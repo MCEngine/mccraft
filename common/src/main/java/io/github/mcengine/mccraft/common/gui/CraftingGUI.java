@@ -2,6 +2,7 @@ package io.github.mcengine.mccraft.common.gui;
 
 import io.github.mcengine.mccraft.common.util.GUIConstants;
 import io.github.mcengine.mccraft.common.util.ItemSerializer;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -26,7 +27,7 @@ public final class CraftingGUI {
      * @param recipeId the recipe identifier
      */
     public static void openEditor(Player player, String type, String recipeId) {
-        String title = GUIConstants.CRAFTING_GUI_TITLE + " - " + type + " [" + recipeId + "]";
+        Component title = Component.text(GUIConstants.CRAFTING_GUI_TITLE + " - " + type + " [" + recipeId + "]");
         Inventory inv = Bukkit.createInventory(null, GUIConstants.GUI_SIZE, title);
         fillFiller(inv);
         player.openInventory(inv);
@@ -41,7 +42,7 @@ public final class CraftingGUI {
      * @param row      the database row containing the recipe contents
      */
     public static void openEditorWithData(Player player, String type, String recipeId, Map<String, String> row) {
-        String title = GUIConstants.CRAFTING_GUI_TITLE + " - " + type + " [" + recipeId + "]";
+        Component title = Component.text(GUIConstants.CRAFTING_GUI_TITLE + " - " + type + " [" + recipeId + "]");
         Inventory inv = Bukkit.createInventory(null, GUIConstants.GUI_SIZE, title);
         fillFiller(inv);
 
@@ -74,7 +75,7 @@ public final class CraftingGUI {
      * @param row      the database row
      */
     public static void openCraftingView(Player player, String type, String recipeId, Map<String, String> row) {
-        String title = GUIConstants.CRAFTING_GUI_TITLE + " - " + type;
+        Component title = Component.text(GUIConstants.CRAFTING_GUI_TITLE + " - " + type);
         Inventory inv = Bukkit.createInventory(null, GUIConstants.GUI_SIZE, title);
         fillFiller(inv);
 

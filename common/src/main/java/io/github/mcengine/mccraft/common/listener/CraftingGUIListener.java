@@ -5,6 +5,7 @@ import io.github.mcengine.mccraft.common.gui.CraftingGUI;
 import io.github.mcengine.mccraft.common.util.GUIConstants;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -32,21 +33,23 @@ public class CraftingGUIListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        String title = event.getView().getTitle();
-        if (!title.startsWith(GUIConstants.CRAFTING_GUI_TITLE)) return;
+        Component title = event.getView().title();
+        if (title == null) return;
+        String titleText = PlainTextComponentSerializer.plainText().serialize(title);
+        if (!titleText.startsWith(GUIConstants.CRAFTING_GUI_TITLE)) return;
 
         Player player = (Player) event.getWhoClicked();
         int slot = event.getRawSlot();
 
         // If clicking inside the top inventory
         if (slot >= 0 && slot < GUIConstants.GUI_SIZE) {
-            boolean isEditor = title.contains("[");
+            boolean isEditor = titleText.contains("[");
 
             // Allow interaction only on recipe slots and result slot
             if (GUIConstants.isRecipeSlot(slot) || slot == GUIConstants.RESULT_SLOT) {
                 if (!isEditor && slot == GUIConstants.RESULT_SLOT) {
                     // Crafting view: player is trying to take the result
-                    handleCraftResult(event, player, title);
+                    handleCraftResult(event, player, titleText);
                 }
                 // In editor mode, allow free interaction with recipe/result slots
                 // In crafting view, allow interaction with recipe slots (they show items but are locked)

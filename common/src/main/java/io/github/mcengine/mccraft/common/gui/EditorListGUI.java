@@ -31,7 +31,7 @@ public final class EditorListGUI {
      * @param items  the list of database rows for this type
      */
     public static void open(Player player, String type, List<Map<String, String>> items) {
-        String title = GUIConstants.EDITOR_LIST_TITLE + " - " + type;
+        Component title = Component.text(GUIConstants.EDITOR_LIST_TITLE + " - " + type);
         int size = Math.min(54, ((items.size() / 9) + 1) * 9);
         if (size < 9) size = 9;
         Inventory inv = Bukkit.createInventory(null, size, title);
