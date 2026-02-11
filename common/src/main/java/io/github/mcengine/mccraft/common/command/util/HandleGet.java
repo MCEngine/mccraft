@@ -52,11 +52,13 @@ public class HandleGet implements ICraftCommandHandle {
                 return;
             }
 
-            // Stamp the PersistentDataContainer with mccraft_type
+            // Stamp the PersistentDataContainer with mccraft_type and set display name
             ItemMeta meta = headItem.getItemMeta();
             if (meta != null) {
                 NamespacedKey key = new NamespacedKey("mccraft", "mccraft_type");
                 meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, type);
+                meta.displayName(Component.translatable("mcengine.mccraft.msg.get.item.name")
+                        .arguments(Component.text(type)));
                 headItem.setItemMeta(meta);
             }
 

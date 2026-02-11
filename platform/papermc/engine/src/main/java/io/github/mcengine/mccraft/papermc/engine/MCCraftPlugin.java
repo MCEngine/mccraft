@@ -13,6 +13,7 @@ import io.github.mcengine.mccraft.common.database.MCCraftMySQL;
 import io.github.mcengine.mccraft.common.database.MCCraftSQLite;
 import io.github.mcengine.mccraft.common.listener.CraftingGUIListener;
 import io.github.mcengine.mccraft.common.listener.EditorListGUIListener;
+import io.github.mcengine.mccraft.common.listener.HeadItemInteractListener;
 import io.github.mcengine.mccraft.common.listener.ItemDropProtectionListener;
 import io.github.mcengine.mccraft.common.listener.MCCraftListenerManager;
 import io.github.mcengine.mcextension.common.MCExtensionManager;
@@ -84,6 +85,7 @@ public class MCCraftPlugin extends JavaPlugin {
         listenerManager.register(new CraftingGUIListener());
         listenerManager.register(new EditorListGUIListener());
         listenerManager.register(new ItemDropProtectionListener());
+        listenerManager.register(new HeadItemInteractListener());
 
         // 7. Initialize Extension Manager
         this.extensionManager = new MCExtensionManager();

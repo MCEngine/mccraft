@@ -11,8 +11,10 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -61,13 +63,39 @@ public class CraftingGUIListener implements Listener {
                 event.setCancelled(true);
             }
         }
-        // Bottom inventory clicks are allowed (player's own inventory)
+        // Prevent Q-drop and cursor-drop while in crafting GUI
+        if (event.getAction() == InventoryAction.DROP_ALL_SLOT
+                || event.getAction() == InventoryAction.DROP_ONE_SLOT
+                || event.getAction() == InventoryAction.DROP_ALL_CURSOR
+                || event.getAction() == InventoryAction.DROP_ONE_CURSOR) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        Component dragTitle = event.getView().title();
+        if (dragTitle == null) return;
+        String dragTitleText = PlainTextComponentSerializer.plainText().serialize(dragTitle);
+        if (!dragTitleText.startsWith(GUIConstants.CRAFTING_GUI_TITLE)) return;
+
+        // Cancel drag into filler slots
+        for (int rawSlot : event.getRawSlots()) {
+            if (rawSlot >= 0 && rawSlot < GUIConstants.GUI_SIZE
+                    && !GUIConstants.isRecipeSlot(rawSlot) && rawSlot != GUIConstants.RESULT_SLOT) {
+                event.setCancelled(true);
+                return;
+            }
+        }
     }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player)) return;
-        String title = event.getView().getTitle();
+        Component closeTitle = event.getView().title();
+        if (closeTitle == null) return;
+        String title = PlainTextComponentSerializer.plainText().serialize(closeTitle);
         if (!title.startsWith(GUIConstants.CRAFTING_GUI_TITLE)) return;
 
         // Only save if this is an editor GUI (title contains "[recipeId]")

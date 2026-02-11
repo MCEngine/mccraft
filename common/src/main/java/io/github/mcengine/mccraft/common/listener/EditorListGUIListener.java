@@ -30,7 +30,6 @@ public class EditorListGUIListener implements Listener {
         event.setCancelled(true);
 
         Player player = (Player) event.getWhoClicked();
-        int slot = event.getRawSlot();
         ItemStack clicked = event.getCurrentItem();
 
         if (clicked == null || !clicked.hasItemMeta()) return;
